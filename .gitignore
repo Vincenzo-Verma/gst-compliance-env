@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environments
+.env
+.venv/
+venv/
+env.bak/
+
+# Build / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+MANIFEST
+
+# uv
+.python-version
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Secrets / keys
+*.pem
+*.key
+
+# Prompt / build instructions (not part of submission)
+prompt.md
+SUBMISSION.md

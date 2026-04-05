@@ -1,0 +1,123 @@
+name: gst-compliance-env
+version: "1.0.0"
+description: >
+  An OpenEnv environment simulating Indian GST tax compliance workflows.
+  AI agents validate invoices, reconcile GSTR-1 returns, and audit
+  Input Tax Credit (ITC) claims — tasks that affect 14M+ Indian businesses.
+author: Vincenzo-Verma
+license: MIT
+tags:
+  - openenv
+  - tax-compliance
+  - india
+  - gst
+  - real-world
+  - finance
+
+tasks:
+  - id: invoice_validation_easy
+    name: GST Invoice Validation
+    difficulty: easy
+    max_steps: 10
+    description: >
+      Validate a batch of 5 GST invoices. Identify all invoices with
+      errors (invalid GSTIN format, wrong tax rates, missing fields,
+      tax calculation mismatches). Flag each error with the correct
+      error type. Partial credit for each correctly identified error.
+
+  - id: gstr1_reconciliation_medium
+    name: GSTR-1 Reconciliation
+    difficulty: medium
+    max_steps: 20
+    description: >
+      Reconcile mismatches between a business's internal sales register
+      and their GSTR-1 portal data across 15 invoices. Identify which
+      invoices have discrepancies and correct the values. 4 invoices
+      contain deliberate mismatches in taxable value or tax amount.
+
+  - id: itc_audit_hard
+    name: ITC Fraud Audit
+    difficulty: hard
+    max_steps: 30
+    description: >
+      Audit 20 Input Tax Credit (ITC) claims. Identify fraudulent or
+      ineligible claims (Section 17(5) blocked goods, non-filer suppliers,
+      invalid GSTINs). Approve valid claims, reject invalid ones with
+      the correct legal section citation, and compute the total eligible ITC.
+
+action_space:
+  type: object
+  description: >
+    JSON object with action_type and optional parameters.
+    Valid action_types depend on current task phase.
+  properties:
+    action_type:
+      type: string
+      enum:
+        - validate_invoice
+        - flag_error
+        - clear_flag
+        - approve_itc
+        - reject_itc
+        - correct_value
+        - file_return
+        - request_info
+    invoice_id:
+      type: string
+      description: Target invoice identifier (e.g. INV-1234)
+    error_type:
+      type: string
+      description: >
+        Type of error being flagged. One of:
+        invalid_gstin_supplier, invalid_gstin_buyer, missing_field,
+        invalid_gst_rate, tax_calculation_mismatch, duplicate_invoice
+    corrected_value:
+      type: number
+      description: Corrected numeric value for reconciliation task
+    field_name:
+      type: string
+      description: Which field is being corrected (taxable_value, igst, etc.)
+    legal_section:
+      type: string
+      description: >
+        Legal basis for ITC rejection. One of:
+        section_17_5_personal_use, section_17_5_food_beverage,
+        section_17_5_motor_vehicle, supplier_non_filer,
+        supplier_gstin_invalid, itc_reversal_required
+    reasoning:
+      type: string
+      description: Agent's brief explanation of the action (max 200 chars)
+
+observation_space:
+  type: object
+  description: Current task state visible to the agent
+  properties:
+    task_id:
+      type: string
+    step_number:
+      type: integer
+    phase:
+      type: string
+      description: Current phase of the task
+    invoices:
+      type: array
+      description: List of invoice objects visible to agent
+    flags:
+      type: object
+      description: Map of invoice_id to list of flags agent has raised
+    corrections:
+      type: object
+      description: Map of invoice_id to corrections made (reconciliation task)
+    itc_decisions:
+      type: object
+      description: Map of invoice_id to approve/reject decision
+    itc_running_total:
+      type: number
+      description: Running total of approved ITC amount
+    message:
+      type: string
+      description: Human-readable status message
+    done:
+      type: boolean
+    steps_remaining:
+      type: integer
