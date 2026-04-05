@@ -246,6 +246,17 @@ async def list_tasks():
     }
 
 
+@app.get("/")
+async def root():
+    """Root endpoint — satisfies HF Spaces container health probe."""
+    return {
+        "env": "gst-compliance-env",
+        "version": "1.0.0",
+        "status": "ok",
+        "endpoints": ["/reset", "/step", "/state", "/tasks", "/health", "/docs"],
+    }
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "env": "gst-compliance-env", "version": "1.0.0"}
