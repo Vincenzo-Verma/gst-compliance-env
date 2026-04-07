@@ -189,6 +189,7 @@ async def step(action: GSTAction):
         message = f"Return filed. Completeness: {completeness_ratio:.0%}"
 
     # ── Compute reward ─────────────────────────────────────────────────────
+    _EPS = 1e-6
     reward_result = compute_step_reward(
         action_dict,
         _episode_state,
@@ -203,17 +204,45 @@ async def step(action: GSTAction):
         _episode_state["done"] = True
         message += " | Max steps reached."
 
+    # ── Compute final task score via graders when episode ends ─────────────
+    task_score = None
+    grader_details = {}
+    if _episode_state["done"]:
+        task_id = _episode_state["task_id"]
+        invoices = _episode_state["invoices"]
+        if task_id == "invoice_validation_easy":
+            task_score, grader_details = grade_easy_task(
+                _episode_state["flags"], invoices
+            )
+        elif task_id == "gstr1_reconciliation_medium":
+            task_score, grader_details = grade_medium_task(
+                _episode_state["corrections"], invoices
+            )
+        elif task_id == "itc_audit_hard":
+            task_score, grader_details = grade_hard_task(
+                _episode_state["itc_decisions"], invoices
+            )
+
+    # Use graded task score for the final step; clamp intermediate rewards
+    if task_score is not None:
+        final_reward = task_score
+    else:
+        # Clamp intermediate step rewards to open interval (0, 1)
+        final_reward = max(_EPS, min(1.0 - _EPS, step_reward + 0.5))
+
     obs = build_observation(_episode_state, message=message)
 
     return StepResult(
         observation=obs,
-        reward=step_reward,
+        reward=round(final_reward, 6),
         done=_episode_state["done"],
         info={
             "step": _episode_state["step"],
             "total_reward": round(_episode_state["total_reward"], 4),
             "reward_breakdown": reward_result["breakdown"],
             "reward_explanation": reward_result["explanation"],
+            **({"task_score": task_score, "grader_details": grader_details}
+               if task_score is not None else {}),
         }
     )
 

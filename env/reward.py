@@ -1,11 +1,13 @@
 """
 Step-level reward function providing dense signal throughout the episode.
-Rewards are in [-0.5, +0.5] per step, scaled to [0, 1] at episode end.
+Raw rewards are computed in [-0.5, +0.5] per step, then normalised to
+the open interval (0, 1) before returning.
 """
 from typing import Dict, Any
 from env.simulator import GSTSimulator
 
 sim = GSTSimulator()
+_EPS = 1e-6
 
 
 def compute_step_reward(
@@ -134,8 +136,12 @@ def compute_step_reward(
         reward -= 0.02
         breakdown["efficiency_penalty"] = -0.02
 
+    # Clamp raw reward to [-0.5, 0.5], then map to open interval (0, 1)
+    clamped = max(-0.5, min(0.5, reward))
+    normalized = max(_EPS, min(1.0 - _EPS, (clamped + 0.5)))
+
     return {
-        "value": round(max(-0.5, min(0.5, reward)), 4),
+        "value": round(normalized, 6),
         "breakdown": breakdown,
         "explanation": explanation,
     }

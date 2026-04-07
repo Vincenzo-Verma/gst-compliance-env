@@ -24,7 +24,7 @@ from openai import OpenAI
 # ── Configuration ────────────────────────────────────────────────────────────
 
 API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
-API_KEY: str      = os.environ.get("HF_TOKEN", "")
+API_KEY: str      = os.environ.get("API_KEY", os.environ.get("HF_TOKEN", ""))
 MODEL_NAME: str   = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
 ENV_BASE_URL: str = os.environ.get("ENV_BASE_URL", "http://localhost:7860")
@@ -179,7 +179,6 @@ async def run_task(
     """Run a single task episode and return normalized score."""
     task_id = task_cfg["id"]
     max_steps = task_cfg["max_steps"]
-    max_total_reward = task_cfg["max_total_reward"]
     success_threshold = task_cfg["success_threshold"]
 
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
@@ -251,9 +250,10 @@ async def run_task(
                 break
 
     # ── Compute final score ──────────────────────────────────────────────
+    # The environment returns a graded task score on the final step;
+    # use it directly so scores are always in the open interval (0, 1).
     _EPS = 1e-6
-    total_reward = sum(rewards)
-    score = total_reward / max_total_reward if max_total_reward > 0 else _EPS
+    score = rewards[-1] if rewards else _EPS
     score = min(max(score, _EPS), 1.0 - _EPS)
     success = score >= success_threshold
 
