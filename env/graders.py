@@ -1,9 +1,16 @@
 """
 Deterministic graders for all 3 GST compliance tasks.
-All graders return float in [0.0, 1.0].
+All graders return float in (0.0, 1.0) — strictly open interval.
 Graders are pure functions: same inputs always produce same outputs.
 """
 from typing import Dict, List, Any, Tuple
+
+_EPS = 1e-6
+
+
+def _clamp(score: float) -> float:
+    """Clamp score to the open interval (0, 1)."""
+    return max(_EPS, min(1.0 - _EPS, score))
 
 
 def grade_easy_task(
@@ -30,7 +37,7 @@ def grade_easy_task(
 
     total_true_errors = sum(len(v) for v in true_errors.values())
     if total_true_errors == 0:
-        return 1.0, {"note": "No errors in this batch — file_return is correct action"}
+        return _clamp(1.0), {"note": "No errors in this batch — file_return is correct action"}
 
     true_positives = 0
     false_positives = 0
@@ -49,9 +56,9 @@ def grade_easy_task(
 
     recall_score = (true_positives / total_true_errors) * 0.85
     fp_penalty = min(false_positives * 0.1, 0.3)
-    score = max(0.0, min(1.0, recall_score - fp_penalty))
+    score = _clamp(recall_score - fp_penalty)
 
-    return round(score, 3), {
+    return round(score, 6), {
         "true_positives": true_positives,
         "false_positives": false_positives,
         "total_true_errors": total_true_errors,
@@ -80,7 +87,7 @@ def grade_medium_task(
     ]
     total = len(mismatch_invoices)
     if total == 0:
-        return 1.0, {"note": "No mismatches in this batch"}
+        return _clamp(1.0), {"note": "No mismatches in this batch"}
 
     identified = 0
     correctly_fixed = 0
@@ -97,9 +104,9 @@ def grade_medium_task(
 
     identification_score = (identified / total) * 0.40
     correction_score = (correctly_fixed / total) * 0.60
-    score = round(identification_score + correction_score, 3)
+    score = _clamp(identification_score + correction_score)
 
-    return score, {
+    return round(score, 6), {
         "total_mismatches": total,
         "identified": identified,
         "correctly_fixed": correctly_fixed,
@@ -168,9 +175,9 @@ def grade_hard_task(
     itc_error = abs(agent_total_itc - true_total_itc) / max(true_total_itc, 1)
     itc_score = max(0.0, 1.0 - itc_error) * 0.30
 
-    score = round(decision_score + section_score + itc_score, 3)
+    score = _clamp(decision_score + section_score + itc_score)
 
-    return score, {
+    return round(score, 6), {
         "total_invoices": total,
         "correct_decisions": correct_decisions,
         "correct_sections": correct_sections,
