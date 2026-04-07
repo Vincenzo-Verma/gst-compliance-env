@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.11-slim
+FROM ghcr.io/meta-pytorch/openenv-base:latest
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copy and install Python dependencies first (layer caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -35,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
 # Start FastAPI server
-CMD ["uvicorn", "env.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
+CMD ["python", "-m", "uvicorn", "env.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
