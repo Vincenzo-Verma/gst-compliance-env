@@ -201,9 +201,10 @@ async def run_task(
             reset_data = resp.json()
             observation = reset_data.get("observation", {})
         except Exception as e:
+            _EPS = 1e-6
             print(f"[DEBUG] Reset failed: {e}", flush=True)
-            log_end(success=False, steps=0, score=0.0, rewards=[])
-            return 0.0
+            log_end(success=False, steps=0, score=_EPS, rewards=[])
+            return _EPS
 
         # ── Run steps ────────────────────────────────────────────────────
         for step in range(1, max_steps + 1):
@@ -250,9 +251,10 @@ async def run_task(
                 break
 
     # ── Compute final score ──────────────────────────────────────────────
+    _EPS = 1e-6
     total_reward = sum(rewards)
-    score = total_reward / max_total_reward if max_total_reward > 0 else 0.0
-    score = min(max(score, 0.0), 1.0)
+    score = total_reward / max_total_reward if max_total_reward > 0 else _EPS
+    score = min(max(score, _EPS), 1.0 - _EPS)
     success = score >= success_threshold
 
     log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
