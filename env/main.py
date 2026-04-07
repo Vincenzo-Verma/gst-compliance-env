@@ -189,7 +189,6 @@ async def step(action: GSTAction):
         message = f"Return filed. Completeness: {completeness_ratio:.0%}"
 
     # ── Compute reward ─────────────────────────────────────────────────────
-    _EPS = 1e-6
     reward_result = compute_step_reward(
         action_dict,
         _episode_state,
@@ -223,12 +222,12 @@ async def step(action: GSTAction):
                 _episode_state["itc_decisions"], invoices
             )
 
-    # Use graded task score for the final step; clamp intermediate rewards
+    # Use graded task score for the final step; step_reward from
+    # compute_step_reward is already normalised to (0, 1).
     if task_score is not None:
         final_reward = task_score
     else:
-        # Clamp intermediate step rewards to open interval (0, 1)
-        final_reward = max(_EPS, min(1.0 - _EPS, step_reward + 0.5))
+        final_reward = step_reward
 
     obs = build_observation(_episode_state, message=message)
 

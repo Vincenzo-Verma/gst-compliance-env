@@ -39,3 +39,5 @@ MANIFEST
 # Prompt / build instructions (not part of submission)
 prompt.md
 SUBMISSION.md
+submission_test/inference.py
+submission_test/prevalidation.sh
