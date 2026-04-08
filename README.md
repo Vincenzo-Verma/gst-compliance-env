@@ -1,4 +1,3 @@
-```yaml
 ---
 title: GST Compliance Env
 emoji: 🧾
@@ -8,7 +7,6 @@ sdk: docker
 app_port: 7860
 pinned: false
 ---
-```
 
 # GST Compliance Agent Environment
 
