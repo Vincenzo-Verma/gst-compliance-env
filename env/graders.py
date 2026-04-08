@@ -5,7 +5,7 @@ Graders are pure functions: same inputs always produce same outputs.
 """
 from typing import Dict, List, Any, Tuple
 
-_EPS = 1e-6
+_EPS = 0.01
 
 
 def _clamp(score: float) -> float:

@@ -7,7 +7,7 @@ from typing import Dict, Any
 from env.simulator import GSTSimulator
 
 sim = GSTSimulator()
-_EPS = 1e-6
+_EPS = 0.01
 
 
 def compute_step_reward(

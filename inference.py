@@ -52,35 +52,30 @@ TASKS = [
 ]
 
 # ── Logging — EXACT FORMAT REQUIRED ─────────────────────────────────────────
-# Each line: [TAG] followed by a JSON payload.
+# Each line: [TAG] key=value key=value ...
 # Evaluator parses lines starting with [START], [STEP], [END].
 
 def log_start(task: str, env: str, model: str) -> None:
-    payload = json.dumps({"task": task, "env": env, "model": model})
-    print(f"[START] {payload}", flush=True)
+    print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
 def log_step(step: int, action: str, reward: float,
              done: bool, error: Optional[str]) -> None:
-    payload = json.dumps({
-        "step": step,
-        "action": action,
-        "reward": reward,
-        "done": done,
-        "error": error,
-    })
-    print(f"[STEP] {payload}", flush=True)
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(
+        f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}",
+        flush=True,
+    )
 
 
 def log_end(success: bool, steps: int, score: float,
             rewards: List[float]) -> None:
-    payload = json.dumps({
-        "success": success,
-        "steps": steps,
-        "score": score,
-        "rewards": rewards,
-    })
-    print(f"[END] {payload}", flush=True)
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(
+        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
+        flush=True,
+    )
 
 
 # ── System Prompts per Task ───────────────────────────────────────────────────
@@ -200,10 +195,9 @@ async def run_task(
             reset_data = resp.json()
             observation = reset_data.get("observation", {})
         except Exception as e:
-            _EPS = 1e-6
             print(f"[DEBUG] Reset failed: {e}", flush=True)
-            log_end(success=False, steps=0, score=_EPS, rewards=[])
-            return _EPS
+            log_end(success=False, steps=0, score=0.01, rewards=[])
+            return 0.01
 
         # ── Run steps ────────────────────────────────────────────────────
         for step in range(1, max_steps + 1):
@@ -252,7 +246,7 @@ async def run_task(
     # ── Compute final score ──────────────────────────────────────────────
     # The environment returns a graded task score on the final step;
     # use it directly so scores are always in the open interval (0, 1).
-    _EPS = 1e-6
+    _EPS = 0.01
     score = rewards[-1] if rewards else _EPS
     score = min(max(score, _EPS), 1.0 - _EPS)
     success = score >= success_threshold
@@ -282,7 +276,6 @@ async def main() -> None:
         print(f"[DEBUG] Task '{task_cfg['id']}' score: {score:.3f}", flush=True)
 
     avg_score = sum(all_scores) / len(all_scores)
-    print(f"[DEBUG] ─────────────────────────────────────", flush=True)
     print(f"[DEBUG] Average score across all tasks: {avg_score:.3f}", flush=True)
     for task_cfg, score in zip(TASKS, all_scores):
         print(f"[DEBUG]   {task_cfg['id']}: {score:.3f}", flush=True)
