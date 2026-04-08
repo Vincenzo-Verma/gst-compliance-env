@@ -1,3 +1,15 @@
+```yaml
+---
+title: GST Compliance Env
+emoji: 🧾
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+```
+
 # GST Compliance Agent Environment
 
 [![OpenEnv](https://img.shields.io/badge/OpenEnv-v1.0-blue)](https://openenv.dev)
